@@ -1,0 +1,20 @@
+{
+  "SpinArchipelago_Name": {
+    "en": "Spin Archipelago"
+  },
+  "SpinArchipelago_ServerSettings": {
+    "en": "Server Settings"
+  },
+  "SpinArchipelago_PlayerName": {
+    "en": "Player Name"
+  },
+  "SpinArchipelago_ServerAddress": {
+    "en": "Server Address"
+  },
+  "SpinArchipelago_Password": {
+    "en": "Password"
+  },
+  "SpinArchipelago_Connect": {
+    "en": "Connect"
+  }
+}

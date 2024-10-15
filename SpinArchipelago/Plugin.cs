@@ -1,8 +1,11 @@
+using System.Reflection;
 using BepInEx;
+using SpinCore.Translation;
 
 namespace SpinArchipelago
 {
     [BepInPlugin(Guid, Name, Version)]
+    [BepInDependency("srxd.raoul1808.spincore")]
     public class Plugin : BaseUnityPlugin
     {
         private const string Guid = "srxd.raoul1808.spinarchipelago";
@@ -13,6 +16,10 @@ namespace SpinArchipelago
         {
             Log.Init(Logger);
             Log.Info($"Hello from {Name}");
+
+            var stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("SpinArchipelago.locale.json");
+            TranslationHelper.LoadTranslationsFromStream(stream);
+            ArchipelagoManager.InitUI();
         }
     }
 }
