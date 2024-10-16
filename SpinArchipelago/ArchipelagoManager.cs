@@ -120,6 +120,21 @@ namespace SpinArchipelago
             return UnlockedSongs.Contains(id);
         }
 
+        public static void PlayingTrack()
+        {
+            _session.SetClientState(ArchipelagoClientState.ClientPlaying);
+        }
+
+        public static void StopPlaying()
+        {
+            _session.SetClientState(ArchipelagoClientState.ClientReady);
+        }
+
+        public static void ClearSong(int id)
+        {
+            _session.Locations.CompleteLocationChecks(id);
+        }
+
         private static void ConnectToServer()
         {
             if (string.IsNullOrWhiteSpace(PlayerName))
@@ -187,6 +202,7 @@ namespace SpinArchipelago
             NotificationSystemGUI.AddMessage("Connected!");
             Log.Info("Connected!");
             _postConnecting = false;
+            _session.SetClientState(ArchipelagoClientState.ClientReady);
         }
 
         private static void ReceivedItemHandler(ReceivedItemsHelper helper)

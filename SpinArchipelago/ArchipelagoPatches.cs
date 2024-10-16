@@ -1,4 +1,5 @@
 using HarmonyLib;
+using XDMenuPlay;
 
 namespace SpinArchipelago
 {
@@ -18,6 +19,35 @@ namespace SpinArchipelago
             }
 
             __result = ArchipelagoManager.IsSongUnlocked(__instance.IndexInList + 1);
+        }
+
+        [HarmonyPatch(typeof(CompleteSequenceGameState), nameof(CompleteSequenceGameState.OnBecameActive))]
+        [HarmonyPostfix]
+        private static void CompleteLocationCheck()
+        {
+            if (!ArchipelagoManager.IsConnected)
+                return;
+            var metadata = Track.PlayHandle.Setup.TrackDataSegmentForSingleTrackDataSetup.metadata;
+            if (metadata.IsCustom)
+                return;
+            int trackId = metadata.IndexInList;
+            NotificationSystemGUI.AddMessage($"Completed song {trackId}. Sending to Archipelago server now");
+            ArchipelagoManager.ClearSong(trackId + 1);
+        }
+
+        [HarmonyPatch(typeof(Track), nameof(Track.PlayTrack))]
+        [HarmonyPostfix]
+        private static void SetArchipelagoPlayingState()
+        {
+            ArchipelagoManager.PlayingTrack();
+        }
+
+        [HarmonyPatch(typeof(SpinMenu), nameof(SpinMenu.OpenMenu))]
+        [HarmonyPostfix]
+        private static void StopArchipelagoPlayingState(SpinMenu __instance)
+        {
+            if (__instance.GetType() == typeof(XDSelectionListMenu))
+                ArchipelagoManager.StopPlaying();
         }
     }
 }
