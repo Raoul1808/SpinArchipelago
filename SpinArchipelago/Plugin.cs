@@ -1,5 +1,6 @@
 using System.Reflection;
 using BepInEx;
+using HarmonyLib;
 using SpinCore.Translation;
 
 namespace SpinArchipelago
@@ -16,6 +17,9 @@ namespace SpinArchipelago
         {
             Log.Init(Logger);
             Log.Info($"Hello from {Name}");
+
+            var harmony = new Harmony(Guid);
+            harmony.PatchAll(typeof(ArchipelagoPatches));
 
             var stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("SpinArchipelago.locale.json");
             TranslationHelper.LoadTranslationsFromStream(stream);

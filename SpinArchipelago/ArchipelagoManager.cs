@@ -30,8 +30,11 @@ namespace SpinArchipelago
         }
 
         private static ArchipelagoSession _session;
+        private static bool _postConnecting;
 
-        private static List<int> _unlockedSongs = new List<int>();
+        private static readonly List<int> UnlockedSongs = new List<int>();
+
+        public static bool IsConnected => _session?.Socket?.Connected ?? false;
 
         public static void InitUI()
         {
@@ -112,6 +115,11 @@ namespace SpinArchipelago
             );
         }
 
+        public static bool IsSongUnlocked(int id)
+        {
+            return UnlockedSongs.Contains(id);
+        }
+
         private static void ConnectToServer()
         {
             if (string.IsNullOrWhiteSpace(PlayerName))
@@ -173,10 +181,12 @@ namespace SpinArchipelago
             }
 
             //var success = (LoginSuccessful)result;
+            _postConnecting = true;
             _session.Items.ItemReceived += ReceivedItemHandler;
             _session.SetClientState(ArchipelagoClientState.ClientConnected);
             NotificationSystemGUI.AddMessage("Connected!");
             Log.Info("Connected!");
+            _postConnecting = false;
         }
 
         private static void ReceivedItemHandler(ReceivedItemsHelper helper)
@@ -184,7 +194,12 @@ namespace SpinArchipelago
             while (helper.Any())
             {
                 var itemInfo = helper.DequeueItem();
+                UnlockedSongs.Add((int)itemInfo.ItemId);
                 Log.Info($"CALLBACK: Obtained Item {itemInfo.ItemId} {itemInfo.ItemName} from {itemInfo.Player.Name} in {itemInfo.Player.Game}");
+                if (_postConnecting) continue;
+                NotificationSystemGUI.AddMessage($"Song {itemInfo.ItemName} unlocked (courtesy of {itemInfo.Player.Name})");
+                if (XDSelectionListMenu.Instance?.isActiveAndEnabled ?? false)
+                    XDSelectionListMenu.Instance?.ActiveList?.SnapToIndex((int)itemInfo.ItemId);
             }
         }
     }
