@@ -39,14 +39,15 @@ namespace SpinArchipelago
         [HarmonyPostfix]
         private static void SetArchipelagoPlayingState()
         {
-            ArchipelagoManager.PlayingTrack();
+            if (ArchipelagoManager.IsConnected)
+                ArchipelagoManager.PlayingTrack();
         }
 
         [HarmonyPatch(typeof(SpinMenu), nameof(SpinMenu.OpenMenu))]
         [HarmonyPostfix]
         private static void StopArchipelagoPlayingState(SpinMenu __instance)
         {
-            if (__instance.GetType() == typeof(XDSelectionListMenu))
+            if (ArchipelagoManager.IsConnected && __instance.GetType() == typeof(XDSelectionListMenu))
                 ArchipelagoManager.StopPlaying();
         }
 
@@ -54,6 +55,7 @@ namespace SpinArchipelago
         [HarmonyPostfix]
         private static void SendDeathLink()
         {
+            if (!ArchipelagoManager.IsConnected) return;
             string title = Track.PlayHandle.Setup.TrackDataSegmentForSingleTrackDataSetup.metadata.Title;
             var diff = Track.PlayHandle.data.Difficulty;
             ArchipelagoManager.SendDeathLink(title, diff);
@@ -63,7 +65,7 @@ namespace SpinArchipelago
         [HarmonyPostfix]
         private static void ApplyQueuedDeathLinks()
         {
-            if (Track.IsPlaying)
+            if (ArchipelagoManager.IsConnected && Track.IsPlaying)
                 ArchipelagoManager.ApplyDeathLink();
         }
     }
