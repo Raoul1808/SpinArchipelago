@@ -19,6 +19,7 @@ namespace SpinArchipelago
 
             var stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("SpinArchipelago.locale.json");
             TranslationHelper.LoadTranslationsFromStream(stream);
+            ArchipelagoManager.GrabConfigEntries(Config);
             ArchipelagoManager.InitUI();
         }
     }

@@ -3,17 +3,31 @@ using System.Collections.Generic;
 using Archipelago.MultiClient.Net;
 using Archipelago.MultiClient.Net.Enums;
 using Archipelago.MultiClient.Net.Helpers;
+using BepInEx.Configuration;
 using SpinCore.UI;
 
 namespace SpinArchipelago
 {
     internal static class ArchipelagoManager
     {
-        private const string DEFAULT_ARCHIPELAGO_URL = "archipelago.gg:38281";
+        private const string DefaultArchipelagoURL = "archipelago.gg:38281";
 
-        private static string _playerName;
-        private static string _serverAddress;
         private static string _password;
+
+        private static ConfigEntry<string> _playerName;
+        private static ConfigEntry<string> _serverAddress;
+
+        private static string PlayerName
+        {
+            get => _playerName.Value;
+            set => _playerName.Value = value;
+        }
+
+        private static string ServerAddress
+        {
+            get => _serverAddress.Value;
+            set => _serverAddress.Value = value;
+        }
 
         private static ArchipelagoSession _session;
 
@@ -38,11 +52,12 @@ namespace SpinArchipelago
                         "Label",
                         "SpinArchipelago_PlayerName"
                     );
-                    UIHelper.CreateInputField(
+                    var field = UIHelper.CreateInputField(
                         g.Transform,
                         "Input Field",
-                        (_, newValue) => _playerName = newValue
+                        (_, newValue) => PlayerName = newValue
                     );
+                    field.InputField.tmpInputField.text = PlayerName;
                 }
                 {
                     var g = UIHelper.CreateGroup(group.Transform, "ServerAddress", Axis.Horizontal);
@@ -54,10 +69,9 @@ namespace SpinArchipelago
                     var field = UIHelper.CreateInputField(
                         g.Transform,
                         "Input Field",
-                        (_, newValue) => _serverAddress = newValue
+                        (_, newValue) => ServerAddress = newValue
                     );
-                    field.InputField.tmpInputField.text = DEFAULT_ARCHIPELAGO_URL;
-                    _serverAddress = DEFAULT_ARCHIPELAGO_URL;
+                    field.InputField.tmpInputField.text = ServerAddress;
                 }
                 {
                     var g = UIHelper.CreateGroup(group.Transform, "Password", Axis.Horizontal);
@@ -82,14 +96,30 @@ namespace SpinArchipelago
             UIHelper.RegisterMenuInModSettingsRoot("SpinArchipelago_Name", page);
         }
 
+        public static void GrabConfigEntries(ConfigFile config)
+        {
+            _playerName = config.Bind(
+                "Server",
+                "PlayerName",
+                "",
+                "The player name in the multiworld."
+            );
+            _serverAddress = config.Bind(
+                "Server",
+                "ServerAddress",
+                DefaultArchipelagoURL,
+                "The Archipelago server address."
+            );
+        }
+
         private static void ConnectToServer()
         {
-            if (string.IsNullOrWhiteSpace(_playerName))
+            if (string.IsNullOrWhiteSpace(PlayerName))
             {
                 NotificationSystemGUI.AddMessage("Player Name is empty");
                 return;
             }
-            var addressParts = _serverAddress?.Split(':') ?? Array.Empty<string>();
+            var addressParts = ServerAddress?.Split(':') ?? Array.Empty<string>();
             if (addressParts.Length != 2)
             {
                 NotificationSystemGUI.AddMessage("Invalid address");
@@ -115,7 +145,7 @@ namespace SpinArchipelago
             {
                 result = _session.TryConnectAndLogin(
                     "Spin Rhythm XD",
-                    _playerName,
+                    PlayerName,
                     ItemsHandlingFlags.AllItems,
                     password: _password
                 );
@@ -129,7 +159,7 @@ namespace SpinArchipelago
             {
                 var failure = (LoginFailure)result;
                 NotificationSystemGUI.AddMessage("Failed to connect to server: check console logs for details");
-                string failureMessage = $"Failed to connect to {_serverAddress} as {_playerName}:";
+                string failureMessage = $"Failed to connect to {ServerAddress} as {PlayerName}:";
                 foreach (string error in failure.Errors)
                 {
                     failureMessage += $"\n    {error}";
