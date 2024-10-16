@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Archipelago.MultiClient.Net;
+using Archipelago.MultiClient.Net.BounceFeatures.DeathLink;
 using Archipelago.MultiClient.Net.Enums;
 using Archipelago.MultiClient.Net.Helpers;
 using BepInEx.Configuration;
@@ -30,9 +31,12 @@ namespace SpinArchipelago
         }
 
         private static ArchipelagoSession _session;
+        private static DeathLinkService _deathLink;
         private static bool _postConnecting;
+        private static bool _justTriggeredDeathLink = false;
 
         private static readonly List<int> UnlockedSongs = new List<int>();
+        private static readonly Queue<DeathLink> DeathLinkBuffer = new Queue<DeathLink>();
 
         public static bool IsConnected => _session?.Socket?.Connected ?? false;
 
@@ -135,6 +139,22 @@ namespace SpinArchipelago
             _session.Locations.CompleteLocationChecks(id);
         }
 
+        public static void SendDeathLink()
+        {
+            if (_justTriggeredDeathLink) return;
+            _deathLink?.SendDeathLink(new DeathLink(_session.Players.ActivePlayer.Name, "Failed a song"));
+        }
+
+        public static void ApplyDeathLink()
+        {
+            if (DeathLinkBuffer.Count == 0) return;
+            var deathLink = DeathLinkBuffer.Dequeue();
+            _justTriggeredDeathLink = true;
+            Track.FailSong();
+            _justTriggeredDeathLink = false;
+            NotificationSystemGUI.AddMessage($"DEATH LINK: {deathLink.Source} died. Cause: {deathLink.Cause}");
+        }
+
         private static void ConnectToServer()
         {
             if (string.IsNullOrWhiteSpace(PlayerName))
@@ -195,7 +215,7 @@ namespace SpinArchipelago
                 return;
             }
 
-            //var success = (LoginSuccessful)result;
+            var success = (LoginSuccessful)result;
             _postConnecting = true;
             _session.Items.ItemReceived += ReceivedItemHandler;
             _session.SetClientState(ArchipelagoClientState.ClientConnected);
@@ -203,6 +223,17 @@ namespace SpinArchipelago
             Log.Info("Connected!");
             _postConnecting = false;
             _session.SetClientState(ArchipelagoClientState.ClientReady);
+
+            _deathLink = _session.CreateDeathLinkService();
+            if ((long)success.SlotData["deathLink"] == 1)
+                _deathLink.EnableDeathLink();
+            _deathLink.OnDeathLinkReceived += DeathLinkHandler;
+        }
+
+        private static void DeathLinkHandler(DeathLink deathLink)
+        {
+            Log.Info($"DEATH LINK: Adding to buffer. {deathLink.Source} died. Cause: {deathLink.Cause}");
+            DeathLinkBuffer.Enqueue(deathLink);
         }
 
         private static void ReceivedItemHandler(ReceivedItemsHelper helper)
@@ -211,7 +242,7 @@ namespace SpinArchipelago
             {
                 var itemInfo = helper.DequeueItem();
                 UnlockedSongs.Add((int)itemInfo.ItemId);
-                Log.Info($"CALLBACK: Obtained Item {itemInfo.ItemId} {itemInfo.ItemName} from {itemInfo.Player.Name} in {itemInfo.Player.Game}");
+                Log.Info($"NEW ITEM: Obtained Item {itemInfo.ItemId} {itemInfo.ItemName} from {itemInfo.Player.Name} in {itemInfo.Player.Game}");
                 if (_postConnecting) continue;
                 NotificationSystemGUI.AddMessage($"Song {itemInfo.ItemName} unlocked (courtesy of {itemInfo.Player.Name})");
                 if (XDSelectionListMenu.Instance?.isActiveAndEnabled ?? false)

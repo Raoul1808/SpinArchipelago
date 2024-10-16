@@ -49,5 +49,20 @@ namespace SpinArchipelago
             if (__instance.GetType() == typeof(XDSelectionListMenu))
                 ArchipelagoManager.StopPlaying();
         }
+
+        [HarmonyPatch(typeof(Track), nameof(Track.FailSong))]
+        [HarmonyPostfix]
+        private static void SendDeathLink()
+        {
+            ArchipelagoManager.SendDeathLink();
+        }
+
+        [HarmonyPatch(typeof(Track), nameof(Track.Update))]
+        [HarmonyPostfix]
+        private static void ApplyQueuedDeathLinks()
+        {
+            if (Track.IsPlaying)
+                ArchipelagoManager.ApplyDeathLink();
+        }
     }
 }
