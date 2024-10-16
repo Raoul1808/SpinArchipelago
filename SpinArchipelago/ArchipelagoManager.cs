@@ -139,10 +139,10 @@ namespace SpinArchipelago
             _session.Locations.CompleteLocationChecks(id);
         }
 
-        public static void SendDeathLink()
+        public static void SendDeathLink(string title, TrackData.DifficultyType difficulty)
         {
             if (_justTriggeredDeathLink) return;
-            _deathLink?.SendDeathLink(new DeathLink(_session.Players.ActivePlayer.Name, "Failed a song"));
+            _deathLink?.SendDeathLink(new DeathLink(_session.Players.ActivePlayer.Name, $"Failed song {title} on difficulty {difficulty}"));
         }
 
         public static void ApplyDeathLink()

@@ -54,7 +54,9 @@ namespace SpinArchipelago
         [HarmonyPostfix]
         private static void SendDeathLink()
         {
-            ArchipelagoManager.SendDeathLink();
+            string title = Track.PlayHandle.Setup.TrackDataSegmentForSingleTrackDataSetup.metadata.Title;
+            var diff = Track.PlayHandle.data.Difficulty;
+            ArchipelagoManager.SendDeathLink(title, diff);
         }
 
         [HarmonyPatch(typeof(Track), nameof(Track.Update))]
