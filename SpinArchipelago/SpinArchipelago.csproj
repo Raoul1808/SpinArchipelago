@@ -17,6 +17,9 @@
         <Reference Include="SpinCore">
           <HintPath>..\srxd-dir\BepInEx\plugins\SpinCore.dll</HintPath>
         </Reference>
+        <Reference Include="Unity.TextMeshPro">
+          <HintPath>..\srxd-dir\SpinRhythm_Data\Managed\Unity.TextMeshPro.dll</HintPath>
+        </Reference>
         <Reference Include="UnityEngine">
             <HintPath>..\srxd-dir\SpinRhythm_Data\Managed\UnityEngine.dll</HintPath>
         </Reference>
@@ -30,8 +33,13 @@
       <EmbeddedResource Include="locale.json" />
     </ItemGroup>
 
+    <ItemGroup>
+      <PackageReference Include="Archipelago.MultiClient.Net" Version="6.3.1" />
+    </ItemGroup>
+
     <Target Name="PostBuildScript" AfterTargets="AfterBuild">
         <Copy SourceFiles="$(TargetPath)" DestinationFolder="..\srxd-dir\BepInEx\plugins" SkipUnchangedFiles="false" OverwriteReadOnlyFiles="true"/>
+        <Copy SourceFiles="$(TargetDir)\Archipelago.MultiClient.Net.dll" DestinationFolder="..\srxd-dir\BepInEx\plugins" SkipUnchangedFiles="false" OverwriteReadOnlyFiles="true"/>
     </Target>
 
     <Target Name="CopyPdbFile" AfterTargets="AfterBuild" Condition="'$(Configuration)' == 'Debug' And '$(OS)' == 'Unix'">
