@@ -34,6 +34,8 @@ namespace SpinArchipelago
         private static DeathLinkService _deathLink;
         private static bool _postConnecting;
         private static bool _justTriggeredDeathLink = false;
+        private static CustomGroup _connectUiGroup;
+        private static CustomGroup _disconnectUiGroup;
 
         private static readonly List<int> UnlockedSongs = new List<int>();
         private static readonly Queue<DeathLink> DeathLinkBuffer = new Queue<DeathLink>();
@@ -52,8 +54,9 @@ namespace SpinArchipelago
                     "SpinArchipelago_ServerSettings",
                     false
                 );
+                _connectUiGroup = UIHelper.CreateGroup(pageParent, "Connect");
                 {
-                    var g = UIHelper.CreateGroup(group.Transform, "PlayerName", Axis.Horizontal);
+                    var g = UIHelper.CreateGroup(_connectUiGroup.Transform, "PlayerName", Axis.Horizontal);
                     UIHelper.CreateLabel(
                         g.Transform,
                         "Label",
@@ -67,7 +70,7 @@ namespace SpinArchipelago
                     field.InputField.tmpInputField.text = PlayerName;
                 }
                 {
-                    var g = UIHelper.CreateGroup(group.Transform, "ServerAddress", Axis.Horizontal);
+                    var g = UIHelper.CreateGroup(_connectUiGroup.Transform, "ServerAddress", Axis.Horizontal);
                     UIHelper.CreateLabel(
                         g.Transform,
                         "Label",
@@ -81,7 +84,7 @@ namespace SpinArchipelago
                     field.InputField.tmpInputField.text = ServerAddress;
                 }
                 {
-                    var g = UIHelper.CreateGroup(group.Transform, "Password", Axis.Horizontal);
+                    var g = UIHelper.CreateGroup(_connectUiGroup.Transform, "Password", Axis.Horizontal);
                     UIHelper.CreateLabel(
                         g.Transform,
                         "Label",
@@ -94,11 +97,20 @@ namespace SpinArchipelago
                     );
                 }
                 UIHelper.CreateButton(
-                    group.Transform,
+                    _connectUiGroup.Transform,
                     "Connect",
                     "SpinArchipelago_Connect",
                     ConnectToServer
                 );
+                _disconnectUiGroup = UIHelper.CreateGroup(group.Transform, "Disconnect");
+                UIHelper.CreateButton(
+                    _disconnectUiGroup.Transform,
+                    "Disconnect",
+                    "SpinArchipelago_Disconnect",
+                    DisconnectFromServer
+                );
+                _disconnectUiGroup.Active = false;
+                _connectUiGroup.Active = true;
             };
             UIHelper.RegisterMenuInModSettingsRoot("SpinArchipelago_Name", page);
         }
@@ -180,6 +192,18 @@ namespace SpinArchipelago
             Login();
         }
 
+        private static void DisconnectFromServer()
+        {
+            _deathLink.DisableDeathLink();
+            _deathLink.OnDeathLinkReceived -= DeathLinkHandler;
+            _session.Items.ItemReceived -= ReceivedItemHandler;
+            _session.Socket.DisconnectAsync();
+            _deathLink = null;
+            _session = null;
+            _disconnectUiGroup.Active = false;
+            _connectUiGroup.Active = true;
+        }
+
         private static void Login()
         {
             LoginResult result;
@@ -228,6 +252,8 @@ namespace SpinArchipelago
             if ((long)success.SlotData["deathLink"] == 1)
                 _deathLink.EnableDeathLink();
             _deathLink.OnDeathLinkReceived += DeathLinkHandler;
+            _connectUiGroup.Active = false;
+            _disconnectUiGroup.Active = true;
         }
 
         private static void DeathLinkHandler(DeathLink deathLink)

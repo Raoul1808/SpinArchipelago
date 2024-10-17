@@ -16,5 +16,8 @@
   },
   "SpinArchipelago_Connect": {
     "en": "Connect"
+  },
+  "SpinArchipelago_Disconnect": {
+    "en": "Disconnect"
   }
 }
