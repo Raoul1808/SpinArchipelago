@@ -19,5 +19,8 @@
   },
   "SpinArchipelago_Disconnect": {
     "en": "Disconnect"
+  },
+  "SpinArchipelago_DeathLink": {
+    "en": "Death Link"
   }
 }

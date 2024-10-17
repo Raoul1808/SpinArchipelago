@@ -36,9 +36,25 @@ namespace SpinArchipelago
         private static bool _justTriggeredDeathLink = false;
         private static CustomGroup _connectUiGroup;
         private static CustomGroup _disconnectUiGroup;
+        private static CustomMultiChoice _deathLinkToggle;
 
         private static readonly List<int> UnlockedSongs = new List<int>();
         private static readonly Queue<DeathLink> DeathLinkBuffer = new Queue<DeathLink>();
+
+        private static bool _deathLinkEnabled;
+
+        private static bool DeathLinkEnabled
+        {
+            get => _deathLinkEnabled;
+            set
+            {
+                if (value)
+                    _deathLink.EnableDeathLink();
+                else
+                    _deathLink.DisableDeathLink();
+                _deathLinkEnabled = value;
+            }
+        }
 
         public static bool IsConnected => _session?.Socket?.Connected ?? false;
 
@@ -108,6 +124,13 @@ namespace SpinArchipelago
                     "Disconnect",
                     "SpinArchipelago_Disconnect",
                     DisconnectFromServer
+                );
+                _deathLinkToggle = UIHelper.CreateLargeToggle(
+                    _disconnectUiGroup.Transform,
+                    "DeathLink",
+                    "SpinArchipelago_DeathLink",
+                    false,
+                    val => DeathLinkEnabled = val
                 );
                 _disconnectUiGroup.Active = false;
                 _connectUiGroup.Active = true;
@@ -249,9 +272,9 @@ namespace SpinArchipelago
             _session.SetClientState(ArchipelagoClientState.ClientReady);
 
             _deathLink = _session.CreateDeathLinkService();
-            if ((long)success.SlotData["deathLink"] == 1)
-                _deathLink.EnableDeathLink();
             _deathLink.OnDeathLinkReceived += DeathLinkHandler;
+            DeathLinkEnabled = (long)success.SlotData["deathLink"] == 1;
+            _deathLinkToggle.SetCurrentValue(DeathLinkEnabled ? 1 : 0);
             _connectUiGroup.Active = false;
             _disconnectUiGroup.Active = true;
         }
