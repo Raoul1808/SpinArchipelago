@@ -11,6 +11,15 @@ namespace SpinArchipelago
 {
     internal static class ArchipelagoManager
     {
+        private enum ClearCondition
+        {
+            Default,
+            Medal,
+            Accuracy,
+            FullCombo,
+            PerfectFullCombo,
+        }
+
         private const string DefaultArchipelagoURL = "archipelago.gg:38281";
 
         private static string _password;
@@ -42,6 +51,9 @@ namespace SpinArchipelago
         private static readonly Queue<DeathLink> DeathLinkBuffer = new Queue<DeathLink>();
 
         private static bool _deathLinkEnabled;
+        private static ClearCondition _clearCondition;
+        private static int _medalIndex;
+        private static float _targetAccuracy;
 
         private static bool DeathLinkEnabled
         {
@@ -169,8 +181,34 @@ namespace SpinArchipelago
             _session.SetClientState(ArchipelagoClientState.ClientReady);
         }
 
-        public static void ClearSong(int id)
+        public static void ClearSong(int id, MedalValue medal, float accuracy, FullComboState fcState)
         {
+            switch (_clearCondition)
+            {
+                case ClearCondition.Medal:
+                    if (medal.Rank <= _medalIndex)
+                        return;
+                    break;
+
+                case ClearCondition.Accuracy:
+                    if (accuracy < _targetAccuracy)
+                        return;
+                    break;
+
+                case ClearCondition.FullCombo:
+                    if (fcState == FullComboState.None)
+                        return;
+                    break;
+
+                case ClearCondition.PerfectFullCombo:
+                    if (fcState < FullComboState.Perfect)
+                        return;
+                    break;
+
+                case ClearCondition.Default:
+                default:
+                    break;
+            }
             _session.Locations.CompleteLocationChecks(id);
         }
 
@@ -274,6 +312,9 @@ namespace SpinArchipelago
             _deathLink = _session.CreateDeathLinkService();
             _deathLink.OnDeathLinkReceived += DeathLinkHandler;
             DeathLinkEnabled = (long)success.SlotData["deathLink"] == 1;
+            _clearCondition = (ClearCondition)(int)(long)success.SlotData["clearCondition"];
+            _medalIndex = (int)(long)success.SlotData["medalRequirement"] + 1;
+            _targetAccuracy = (int)(long)success.SlotData["targetAccuracy"] / 100f;
             _deathLinkToggle.SetCurrentValue(DeathLinkEnabled ? 1 : 0);
             _connectUiGroup.Active = false;
             _disconnectUiGroup.Active = true;

@@ -21,22 +21,49 @@ namespace SpinArchipelago
             __result = ArchipelagoManager.IsSongUnlocked(__instance.IndexInList + 1);
         }
 
+        private static float GetMaxAccuracy(this PlayState playState)
+        {
+            float accuracy = 0f;
+            int sectionCount = playState.trackData.EditorTrackCuePoints.Count - 1;
+            for (int i = 0; i < sectionCount; i++)
+            {
+                (int currentScore, int maxPotentialScore, int maxScore) = playState.GetCurrentTotalsForPracticeSection(i);
+                accuracy += (float)maxPotentialScore / maxScore;
+            }
+            return accuracy / sectionCount;
+        }
+        
         [HarmonyPatch(typeof(CompleteSequenceGameState), nameof(CompleteSequenceGameState.OnBecameActive))]
         [HarmonyPostfix]
         private static void CompleteLocationCheck()
         {
             if (!ArchipelagoManager.IsConnected)
                 return;
-            // If failed, ignore
+            MedalValue medal = default;
+            float worstAccuracy = 0f;
+            FullComboState worstFcState = default;
             foreach (var playState in Track.PlayStates)
+            {
+                // If failed, ignore
                 if (playState.playStateStatus == PlayStateStatus.Failure)
                     return;
+                var m = new MedalValue(playState);
+                if (m.Rank > medal.Rank)
+                    medal = m;
+                float acc = playState.GetMaxAccuracy();
+                if (acc < worstAccuracy)
+                    worstAccuracy = acc;
+                var fc = playState.fullComboState;
+                if (fc < worstFcState)
+                    worstFcState = fc;
+            }
+            Log.Info("Cleared with rank " + medal.RankStr);
             var metadata = Track.PlayHandle.Setup.TrackDataSegmentForSingleTrackDataSetup.metadata;
             if (metadata.IsCustom)
                 return;
             int trackId = metadata.IndexInList;
             NotificationSystemGUI.AddMessage($"Completed song {trackId}. Sending to Archipelago server now");
-            ArchipelagoManager.ClearSong(trackId + 1);
+            ArchipelagoManager.ClearSong(trackId + 1, medal, worstAccuracy, worstFcState);
         }
 
         [HarmonyPatch(typeof(Track), nameof(Track.PlayTrack))]

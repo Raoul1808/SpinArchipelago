@@ -11,7 +11,7 @@ namespace SpinArchipelago
     {
         // TODO: Add goal
         // TODO: Configure goal
-        // TODO: Add clear conditions
+        // TODO: Test clear conditions
         // TODO: Add traps
         // TODO: Trap ideas:
         // TODO: Chroma Traps (all rainbow, all grayscale, random palette changes)
