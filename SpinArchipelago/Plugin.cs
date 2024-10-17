@@ -9,7 +9,6 @@ namespace SpinArchipelago
     [BepInDependency("srxd.raoul1808.spincore")]
     public class Plugin : BaseUnityPlugin
     {
-        // TODO: Fix clearing counted when failing
         // TODO: Add goal
         // TODO: Configure goal
         // TODO: Add clear conditions

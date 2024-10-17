@@ -27,6 +27,10 @@ namespace SpinArchipelago
         {
             if (!ArchipelagoManager.IsConnected)
                 return;
+            // If failed, ignore
+            foreach (var playState in Track.PlayStates)
+                if (playState.playStateStatus == PlayStateStatus.Failure)
+                    return;
             var metadata = Track.PlayHandle.Setup.TrackDataSegmentForSingleTrackDataSetup.metadata;
             if (metadata.IsCustom)
                 return;
