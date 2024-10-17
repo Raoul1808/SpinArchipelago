@@ -12,12 +12,22 @@ way up. Clearing songs sends location checks and receiving items from other play
 WIP section since I didn't focus on the end-user side of things for the server-side.
 
 Client-Side:
-1. Install the mod
-2. **HIGHLY RECOMMENDED**: head over to the track selection list menu and set the filters to show ONLY official songs.
-3. Go to the options menu, then in the mod settings tab and open the Spin Archipelago mod settings.
-4. Fill in the username, server address and password fields.
-5. Click on connect
-6. Profit
+1. Install BepInEx on your game installation (v5, not v6)
+   - You can use [this handy program](https://github.com/SRXDModdingGroup/SRXDBepInExInstaller/releases/tag/2.0.0b1)
+     to install BepInEx on your game installation (**do not install v5.4.23 and later from the installer**).
+   - If you are going for a manual installation, install BepInEx **v5.4.x for Mono games**, and **make sure you swap the 2
+     UnityPlayer.dll files after installing**, otherwise BepInEx will not get loaded.
+2. If you do not have a plugins folder, run the game once and close it.
+   - Recommended: change the BepInEx config to show the logging console.
+     - This is automatically done when using the BepInEx installer linked above.
+3. Download [SpinCore](https://github.com/Raoul1808/SpinCore) and place both SpinCore.dll and Newtonsoft.Json.dll in
+   the BepInEx plugins folder.
+4. Download (or build) the mod and place it in the BepInEx plugins folder.
+5. **HIGHLY RECOMMENDED**: head over to the track selection list menu and set the filters to show ONLY official songs.
+6. Go to the options menu, then in the mod settings tab and open the Spin Archipelago mod settings.
+7. Fill in the username, server address and password fields.
+8. Click on connect
+9. Profit
 
 ## Building
 
