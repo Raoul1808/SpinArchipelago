@@ -46,6 +46,13 @@ namespace SpinArchipelago
         private static CustomGroup _connectUiGroup;
         private static CustomGroup _disconnectUiGroup;
         private static CustomMultiChoice _deathLinkToggle;
+        
+#if DEBUG
+        private static CustomGroup _debugGroup;
+        private static CustomMultiChoice _clearConditionMultiChoice;
+        private static CustomMultiChoice _medalRequirementMultiChoice;
+        private static CustomMultiChoice _targetAccuracyMultiChoice;
+#endif
 
         private static readonly List<int> UnlockedSongs = new List<int>();
         private static readonly Queue<DeathLink> DeathLinkBuffer = new Queue<DeathLink>();
@@ -146,6 +153,41 @@ namespace SpinArchipelago
                 );
                 _disconnectUiGroup.Active = false;
                 _connectUiGroup.Active = true;
+
+#if DEBUG
+                _debugGroup = UIHelper.CreateGroup(pageParent, "Debug");
+                UIHelper.CreateSectionHeader(
+                    _debugGroup.Transform,
+                    "Header",
+                    "SpinArchipelago_DebugSection",
+                    true
+                );
+                _clearConditionMultiChoice = UIHelper.CreateLargeMultiChoiceButton(
+                    _debugGroup.Transform,
+                    "Clear Condition",
+                    "SpinArchipelago_ClearCondition",
+                    ClearCondition.Default,
+                    val => _clearCondition = val
+                );
+                _medalRequirementMultiChoice = UIHelper.CreateLargeMultiChoiceButton(
+                    _debugGroup.Transform,
+                    "Medal Requirement",
+                    "SpinArchipelago_MedalRequirement",
+                    0,
+                    val => _medalIndex = val,
+                    () => new IntRange(1, MedalValue.RanksPerDifficulty + 1),
+                    val => TrackDataMetadata.RankConversion[val].rankString
+                );
+                _targetAccuracyMultiChoice = UIHelper.CreateLargeMultiChoiceButton(
+                    _debugGroup.Transform,
+                    "Target Accuracy",
+                    "SpinArchipelago_TargetAccuracy",
+                    800,
+                    val => _targetAccuracy = val / 100f,
+                    () => new IntRange(0, 101),
+                    val => val + "%"
+                );
+#endif
             };
             UIHelper.RegisterMenuInModSettingsRoot("SpinArchipelago_Name", page);
         }
@@ -318,6 +360,12 @@ namespace SpinArchipelago
             _deathLinkToggle.SetCurrentValue(DeathLinkEnabled ? 1 : 0);
             _connectUiGroup.Active = false;
             _disconnectUiGroup.Active = true;
+            
+#if DEBUG
+            _clearConditionMultiChoice.SetCurrentValue((int)_clearCondition);
+            _medalRequirementMultiChoice.SetCurrentValue(_medalIndex);
+            _targetAccuracyMultiChoice.SetCurrentValue((int)(_targetAccuracy * 100));
+#endif
         }
 
         private static void DeathLinkHandler(DeathLink deathLink)
