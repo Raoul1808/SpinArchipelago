@@ -21,17 +21,21 @@ namespace SpinArchipelago
             __result = ArchipelagoManager.IsSongUnlocked(__instance.IndexInList + 1);
         }
 
-        private static float GetMaxAccuracy(this PlayState playState)
-        {
-            float accuracy = 0f;
-            int sectionCount = playState.trackData.EditorTrackCuePoints.Count - 1;
-            for (int i = 0; i < sectionCount; i++)
-            {
-                (int currentScore, int maxPotentialScore, int maxScore) = playState.GetCurrentTotalsForPracticeSection(i);
-                accuracy += (float)maxPotentialScore / maxScore;
-            }
-            return accuracy / sectionCount;
-        }
+        // private static float GetMaxAccuracy(this PlayState playState)
+        // {
+        //     var stats = playState.playStateStats.allTimed;
+        //     float maxScore = stats.maxPossibleScore;
+        //     float score = stats.score;
+        //     return score / maxScore;
+        //     // float accuracy = 0f;
+        //     // int sectionCount = playState.trackData.EditorTrackCuePoints.Count - 1;
+        //     // for (int i = 0; i < sectionCount; i++)
+        //     // {
+        //     //     (int currentScore, int maxPotentialScore, int maxScore) = playState.GetCurrentTotalsForPracticeSection(i);
+        //     //     accuracy += (float)maxPotentialScore / maxScore;
+        //     // }
+        //     // return accuracy / sectionCount;
+        // }
         
         [HarmonyPatch(typeof(CompleteSequenceGameState), nameof(CompleteSequenceGameState.OnBecameActive))]
         [HarmonyPostfix]
@@ -40,22 +44,21 @@ namespace SpinArchipelago
             if (!ArchipelagoManager.IsConnected)
                 return;
             MedalValue medal = default;
-            float worstAccuracy = 0f;
-            FullComboState worstFcState = default;
+            FullComboState bestFcState = default;
             foreach (var playState in Track.PlayStates)
             {
                 // If failed, ignore
+                Log.Info("Found play state " + playState.playerIndex);
                 if (playState.playStateStatus == PlayStateStatus.Failure)
                     return;
                 var m = new MedalValue(playState);
+                Log.Info("This play state has medal " + m.RankStr);
                 if (m.Rank > medal.Rank)
                     medal = m;
-                float acc = playState.GetMaxAccuracy();
-                if (acc < worstAccuracy)
-                    worstAccuracy = acc;
                 var fc = playState.fullComboState;
-                if (fc < worstFcState)
-                    worstFcState = fc;
+                Log.Info("This play state has full combo state " + fc);
+                if (fc > bestFcState)
+                    bestFcState = fc;
             }
             Log.Info("Cleared with rank " + medal.RankStr);
             var metadata = Track.PlayHandle.Setup.TrackDataSegmentForSingleTrackDataSetup.metadata;
@@ -63,7 +66,7 @@ namespace SpinArchipelago
                 return;
             int trackId = metadata.IndexInList;
             NotificationSystemGUI.AddMessage($"Completed song {trackId}. Sending to Archipelago server now");
-            ArchipelagoManager.ClearSong(trackId + 1, medal, worstAccuracy, worstFcState);
+            ArchipelagoManager.ClearSong(trackId + 1, medal, bestFcState);
         }
 
         [HarmonyPatch(typeof(Track), nameof(Track.PlayTrack))]

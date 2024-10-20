@@ -15,7 +15,7 @@ namespace SpinArchipelago
         {
             Default,
             Medal,
-            Accuracy,
+            //Accuracy,
             FullCombo,
             PerfectFullCombo,
         }
@@ -223,7 +223,7 @@ namespace SpinArchipelago
             _session.SetClientState(ArchipelagoClientState.ClientReady);
         }
 
-        public static void ClearSong(int id, MedalValue medal, float accuracy, FullComboState fcState)
+        public static void ClearSong(int id, MedalValue medal, FullComboState fcState)
         {
             switch (_clearCondition)
             {
@@ -232,10 +232,10 @@ namespace SpinArchipelago
                         return;
                     break;
 
-                case ClearCondition.Accuracy:
-                    if (accuracy < _targetAccuracy)
-                        return;
-                    break;
+                // case ClearCondition.Accuracy:
+                //     if (accuracy < _targetAccuracy)
+                //         return;
+                //     break;
 
                 case ClearCondition.FullCombo:
                     if (fcState == FullComboState.None)
