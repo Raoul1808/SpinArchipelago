@@ -11,7 +11,7 @@ namespace SpinArchipelago
     {
         // TODO: Add goal
         // TODO: Configure goal
-        // TODO: Test clear conditions
+        // TODO: Add target accuracy back once I figured out how to get a REAL accuracy number
         // TODO: Add traps
         // TODO: Trap ideas:
         // TODO: Chroma Traps (all rainbow, all grayscale, random palette changes)
