@@ -1,12 +1,13 @@
 using System.Reflection;
 using BepInEx;
 using HarmonyLib;
+using SpinCore;
 using SpinCore.Translation;
 
 namespace SpinArchipelago
 {
     [BepInPlugin(Guid, Name, Version)]
-    [BepInDependency("srxd.raoul1808.spincore")]
+    [BepInDependency(SpinCorePlugin.Guid, SpinCorePlugin.Version)]
     public class Plugin : BaseUnityPlugin
     {
         // TODO: Add goal
@@ -43,6 +44,9 @@ namespace SpinArchipelago
             TranslationHelper.AddTranslation("SpinArchipelago_ClearCondition", "Clear Condition");
             TranslationHelper.AddTranslation("SpinArchipelago_MedalRequirement", "Medal Requirement");
             TranslationHelper.AddTranslation("SpinArchipelago_TargetAccuracy", "Target Accuracy");
+            TranslationHelper.AddTranslation("SpinArchipelago_ClearsRequired", "Clears Required");
+            TranslationHelper.AddTranslation("SpinArchipelago_ClearsRequired_Tooltip", "The amount of clears required to unlock the final song of the run. Clearing the final song will count as a goal completion.");
+            TranslationHelper.AddTranslation("SpinArchipelago_ManuallyTriggerGoal", "Manually Trigger Goal");
 #endif
             ArchipelagoManager.GrabConfigEntries(Config);
             ArchipelagoManager.InitUI();

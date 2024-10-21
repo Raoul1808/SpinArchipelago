@@ -18,7 +18,9 @@ namespace SpinArchipelago
                 return;
             }
 
-            __result = ArchipelagoManager.IsSongUnlocked(__instance.IndexInList + 1);
+            __result = __instance.IndexInList == ArchipelagoManager.BossSong
+                ? ArchipelagoManager.CanPlayBossSong
+                : ArchipelagoManager.IsSongUnlocked(__instance.IndexInList + 1);
         }
 
         // private static float GetMaxAccuracy(this PlayState playState)
@@ -48,26 +50,34 @@ namespace SpinArchipelago
             foreach (var playState in Track.PlayStates)
             {
                 // If failed, ignore
-                Log.Info("Found play state " + playState.playerIndex);
                 if (playState.playStateStatus == PlayStateStatus.Failure)
                     return;
                 var m = new MedalValue(playState);
-                Log.Info("This play state has medal " + m.RankStr);
                 if (m.Rank > medal.Rank)
                     medal = m;
                 var fc = playState.fullComboState;
-                Log.Info("This play state has full combo state " + fc);
                 if (fc > bestFcState)
                     bestFcState = fc;
             }
-            Log.Info("Cleared with rank " + medal.RankStr);
             var metadata = Track.PlayHandle.Setup.TrackDataSegmentForSingleTrackDataSetup.metadata;
             if (metadata.IsCustom)
                 return;
             int trackId = metadata.IndexInList;
-            NotificationSystemGUI.AddMessage($"Completed song {trackId}. Sending to Archipelago server now");
             ArchipelagoManager.ClearSong(trackId + 1, medal, bestFcState);
         }
+
+        // [HarmonyPatch(typeof(LoadIntoPlayingGameState), nameof(LoadIntoPlayingGameState.LoadTrack))]
+        // [HarmonyPrefix]
+        // private static bool PreventPlay()
+        // {
+        //     var metadata = Track.PlayHandle.Setup.TrackDataSegmentForSingleTrackDataSetup.metadata;
+        //     if (ArchipelagoManager.BossSong == metadata.IndexInList && !ArchipelagoManager.CanPlayBossSong)
+        //     {
+        //         NotificationSystemGUI.AddMessage("This is the boss song. You cannot play it for now.");
+        //         return false;
+        //     }
+        //     return true;
+        // }
 
         [HarmonyPatch(typeof(Track), nameof(Track.PlayTrack))]
         [HarmonyPostfix]

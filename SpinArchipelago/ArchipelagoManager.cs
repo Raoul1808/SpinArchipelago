@@ -52,6 +52,7 @@ namespace SpinArchipelago
         private static CustomMultiChoice _clearConditionMultiChoice;
         private static CustomMultiChoice _medalRequirementMultiChoice;
         private static CustomMultiChoice _targetAccuracyMultiChoice;
+        private static CustomMultiChoice _clearsRequiredMultiChoice;
 #endif
 
         private static readonly List<int> UnlockedSongs = new List<int>();
@@ -61,6 +62,12 @@ namespace SpinArchipelago
         private static ClearCondition _clearCondition;
         private static int _medalIndex;
         private static float _targetAccuracy;
+
+        private static int _clearsRequiredForGoal;
+        public static int BossSong { get; private set; }
+
+        public static bool CanPlayBossSong => _clearsRequiredForGoal != 0 &&
+                                              _session.Locations.AllLocationsChecked.Count >= _clearsRequiredForGoal;
 
         private static bool DeathLinkEnabled
         {
@@ -182,10 +189,26 @@ namespace SpinArchipelago
                     _debugGroup.Transform,
                     "Target Accuracy",
                     "SpinArchipelago_TargetAccuracy",
-                    800,
+                    80,
                     val => _targetAccuracy = val / 100f,
                     () => new IntRange(0, 101),
                     val => val + "%"
+                );
+                _clearsRequiredMultiChoice = UIHelper.CreateLargeMultiChoiceButton(
+                    _debugGroup,
+                    "Clears Required",
+                    "SpinArchipelago_ClearsRequired",
+                    20,
+                    val => _clearsRequiredForGoal = val,
+                    () => new IntRange(2, 68),
+                    val => val.ToString()
+                );
+                UIHelper.AddTooltip(_clearsRequiredMultiChoice, "SpinArchipelago_ClearsRequired_Tooltip");
+                UIHelper.CreateButton(
+                    _debugGroup,
+                    "Manually Trigger Goal",
+                    "SpinArchipelago_ManuallyTriggerGoal",
+                    () => _session.SetGoalAchieved()
                 );
 #endif
             };
@@ -225,6 +248,7 @@ namespace SpinArchipelago
 
         public static void ClearSong(int id, MedalValue medal, FullComboState fcState)
         {
+            if (_session.Locations.AllLocationsChecked.Contains(id)) return;
             switch (_clearCondition)
             {
                 case ClearCondition.Medal:
@@ -252,6 +276,19 @@ namespace SpinArchipelago
                     break;
             }
             _session.Locations.CompleteLocationChecks(id);
+            NotificationSystemGUI.AddMessage($"Completed song {id}. Location has been checked.");
+            if (CanPlayBossSong && !UnlockedSongs.Contains(BossSong))
+            {
+                UnlockedSongs.Add(BossSong);
+                NotificationSystemGUI.AddMessage("Boss Song unlocked. Clear it to finish your run!");
+            }
+            if (id == BossSong)
+            {
+                Log.Info("hello4");
+                _session.SetGoalAchieved();
+                NotificationSystemGUI.AddMessage("Congratulations, you have achieved your goal!");
+                Log.Info("hello5");
+            }
         }
 
         public static void SendDeathLink(string title, TrackData.DifficultyType difficulty)
@@ -348,8 +385,8 @@ namespace SpinArchipelago
             _session.SetClientState(ArchipelagoClientState.ClientConnected);
             NotificationSystemGUI.AddMessage("Connected!");
             Log.Info("Connected!");
-            _postConnecting = false;
             _session.SetClientState(ArchipelagoClientState.ClientReady);
+            _postConnecting = false;
 
             _deathLink = _session.CreateDeathLinkService();
             _deathLink.OnDeathLinkReceived += DeathLinkHandler;
@@ -357,14 +394,17 @@ namespace SpinArchipelago
             _clearCondition = (ClearCondition)(int)(long)success.SlotData["clearCondition"];
             _medalIndex = (int)(long)success.SlotData["medalRequirement"] + 1;
             _targetAccuracy = (int)(long)success.SlotData["targetAccuracy"] / 100f;
+            BossSong = (int)(long)success.SlotData["bossSong"] + 1;
+            _clearsRequiredForGoal = (int)(long)success.SlotData["clearsRequiredForGoal"];
             _deathLinkToggle.SetCurrentValue(DeathLinkEnabled ? 1 : 0);
             _connectUiGroup.Active = false;
             _disconnectUiGroup.Active = true;
-            
+
 #if DEBUG
             _clearConditionMultiChoice.SetCurrentValue((int)_clearCondition);
             _medalRequirementMultiChoice.SetCurrentValue(_medalIndex);
             _targetAccuracyMultiChoice.SetCurrentValue((int)(_targetAccuracy * 100));
+            _clearsRequiredMultiChoice.SetCurrentValue(_clearsRequiredForGoal);
 #endif
         }
 
@@ -376,15 +416,15 @@ namespace SpinArchipelago
 
         private static void ReceivedItemHandler(ReceivedItemsHelper helper)
         {
-            while (helper.Any())
+            var itemInfo = helper.DequeueItem();
+            UnlockedSongs.Add((int)itemInfo.ItemId);
+            Log.Info($"NEW ITEM: Obtained Item {itemInfo.ItemId} {itemInfo.ItemName} from {itemInfo.Player.Name} in {itemInfo.Player.Game}");
+            if (_postConnecting) return; 
+            // NotificationSystemGUI.AddMessage($"Song {itemInfo.ItemName} unlocked (courtesy of {itemInfo.Player.Name})");
+            if (XDSelectionListMenu.Instance?.isActiveAndEnabled ?? false)
             {
-                var itemInfo = helper.DequeueItem();
-                UnlockedSongs.Add((int)itemInfo.ItemId);
-                Log.Info($"NEW ITEM: Obtained Item {itemInfo.ItemId} {itemInfo.ItemName} from {itemInfo.Player.Name} in {itemInfo.Player.Game}");
-                if (_postConnecting) continue;
-                NotificationSystemGUI.AddMessage($"Song {itemInfo.ItemName} unlocked (courtesy of {itemInfo.Player.Name})");
-                if (XDSelectionListMenu.Instance?.isActiveAndEnabled ?? false)
-                    XDSelectionListMenu.Instance?.ActiveList?.SnapToIndex((int)itemInfo.ItemId);
+                XDSelectionListMenu.Instance?.UpdateListDisplays();
+                XDSelectionListMenu.Instance?.ActiveList?.SnapToIndex((int)itemInfo.ItemId);
             }
         }
     }
