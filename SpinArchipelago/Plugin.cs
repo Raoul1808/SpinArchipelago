@@ -10,8 +10,7 @@ namespace SpinArchipelago
     [BepInDependency(SpinCorePlugin.Guid, SpinCorePlugin.Version)]
     public class Plugin : BaseUnityPlugin
     {
-        // TODO: Add goal
-        // TODO: Configure goal
+        // TODO: Add buffer for notifications to prevent game crashing (note: should probably hijack this on SpinCore)
         // TODO: Add target accuracy back once I figured out how to get a REAL accuracy number
         // TODO: Add traps
         // TODO: Trap ideas:
