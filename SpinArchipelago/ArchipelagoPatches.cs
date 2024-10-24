@@ -20,7 +20,7 @@ namespace SpinArchipelago
 
             __result = __instance.IndexInList == ArchipelagoManager.BossSong
                 ? ArchipelagoManager.CanPlayBossSong
-                : ArchipelagoManager.IsSongUnlocked(__instance.IndexInList + 1);
+                : ArchipelagoManager.IsSongUnlocked(__instance.Title);
         }
 
         // private static float GetMaxAccuracy(this PlayState playState)
@@ -62,8 +62,8 @@ namespace SpinArchipelago
             var metadata = Track.PlayHandle.Setup.TrackDataSegmentForSingleTrackDataSetup.metadata;
             if (metadata.IsCustom)
                 return;
-            int trackId = metadata.IndexInList;
-            ArchipelagoManager.ClearSong(trackId + 1, medal, bestFcState);
+            string trackName = metadata.Title;
+            ArchipelagoManager.ClearSong(trackName, medal, bestFcState);
         }
 
         // [HarmonyPatch(typeof(LoadIntoPlayingGameState), nameof(LoadIntoPlayingGameState.LoadTrack))]

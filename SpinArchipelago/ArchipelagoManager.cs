@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
+using System.Reflection;
 using Archipelago.MultiClient.Net;
 using Archipelago.MultiClient.Net.BounceFeatures.DeathLink;
 using Archipelago.MultiClient.Net.Enums;
@@ -57,6 +59,7 @@ namespace SpinArchipelago
 
         private static readonly List<int> UnlockedSongs = new List<int>();
         private static readonly Queue<DeathLink> DeathLinkBuffer = new Queue<DeathLink>();
+        private static Dictionary<string, int> _songNameToIdTable;
 
         private static bool _deathLinkEnabled;
         private static ClearCondition _clearCondition;
@@ -83,6 +86,33 @@ namespace SpinArchipelago
         }
 
         public static bool IsConnected => _session?.Socket?.Connected ?? false;
+
+        public static void ParseSongList()
+        {
+            var dict = new Dictionary<string, int>();
+            var songListRawStream = Assembly.GetExecutingAssembly().GetManifestResourceStream("SpinArchipelago.SongList.txt");
+            if (songListRawStream == null)
+                throw new InvalidDataException("No song list");
+            string songListRaw;
+            using (var reader = new StreamReader(songListRawStream))
+            {
+                songListRaw = reader.ReadToEnd();
+            }
+
+            foreach (string line in songListRaw.Split('\n'))
+            {
+                string[] elems = line.Trim().Split('|');
+                if (elems.Length < 2) continue;
+                string songName = elems[1];
+                if (dict.ContainsKey(songName)) continue;
+                if (!int.TryParse(elems[0], out int songId)) continue;
+                dict.Add(songName, songId);
+            }
+
+            if (dict.Count == 0)
+                throw new InvalidDataException("There are no songs in the list");
+            _songNameToIdTable = dict;
+        }
 
         public static void InitUI()
         {
@@ -231,9 +261,11 @@ namespace SpinArchipelago
             );
         }
 
-        public static bool IsSongUnlocked(int id)
+        public static bool IsSongUnlocked(string title)
         {
-            return UnlockedSongs.Contains(id);
+            return _songNameToIdTable != null &&
+                   _songNameToIdTable.TryGetValue(title, out int id) &&
+                   UnlockedSongs.Contains(id);
         }
 
         public static void PlayingTrack()
@@ -246,9 +278,13 @@ namespace SpinArchipelago
             _session.SetClientState(ArchipelagoClientState.ClientReady);
         }
 
-        public static void ClearSong(int id, MedalValue medal, FullComboState fcState)
+        public static void ClearSong(string name, MedalValue medal, FullComboState fcState)
         {
-            if (_session.Locations.AllLocationsChecked.Contains(id)) return;
+            if (!IsConnected ||
+                _songNameToIdTable == null ||
+                !_songNameToIdTable.TryGetValue(name, out int id) ||
+                _session.Locations.AllLocationsChecked.Contains(id))
+                return;
             switch (_clearCondition)
             {
                 case ClearCondition.Medal:
@@ -284,10 +320,8 @@ namespace SpinArchipelago
             }
             if (id == BossSong)
             {
-                Log.Info("hello4");
                 _session.SetGoalAchieved();
                 NotificationSystemGUI.AddMessage("Congratulations, you have achieved your goal!");
-                Log.Info("hello5");
             }
         }
 

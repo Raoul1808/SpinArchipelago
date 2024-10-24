@@ -32,6 +32,7 @@ namespace SpinArchipelago
         {
             Log.Init(Logger);
             Log.Info($"Hello from {Name}");
+            ArchipelagoManager.ParseSongList();
 
             var harmony = new Harmony(Guid);
             harmony.PatchAll(typeof(ArchipelagoPatches));

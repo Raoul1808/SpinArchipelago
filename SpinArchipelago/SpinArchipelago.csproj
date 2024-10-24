@@ -34,6 +34,8 @@
     <ItemGroup>
       <None Remove="locale.json" />
       <EmbeddedResource Include="locale.json" />
+      <None Remove="SongList.txt" />
+      <EmbeddedResource Include="SongList.txt" />
     </ItemGroup>
 
     <ItemGroup>
