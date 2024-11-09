@@ -95,7 +95,10 @@ namespace SpinArchipelago
         public static void ParseSongList()
         {
             var dict = new Dictionary<string, int>();
-            var songListRawStream = Assembly.GetExecutingAssembly().GetManifestResourceStream("SpinArchipelago.Resources.SongList.txt");
+            var overrideFilePath = Path.Combine(Directory.GetParent(Assembly.GetExecutingAssembly().Location).FullName, "SongList.txt");
+            var songListRawStream = File.Exists(overrideFilePath)
+                ? File.OpenRead(overrideFilePath)
+                : Assembly.GetExecutingAssembly().GetManifestResourceStream("SpinArchipelago.Resources.SongList.txt");
             if (songListRawStream == null)
                 throw new InvalidDataException("No song list");
             string songListRaw;
@@ -103,6 +106,8 @@ namespace SpinArchipelago
             {
                 songListRaw = reader.ReadToEnd();
             }
+            if (songListRawStream is FileStream stream)
+                stream.Dispose();
 
             foreach (string line in songListRaw.Split('\n'))
             {
