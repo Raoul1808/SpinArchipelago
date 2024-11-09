@@ -1,13 +1,17 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Reflection;
 using Archipelago.MultiClient.Net;
 using Archipelago.MultiClient.Net.BounceFeatures.DeathLink;
 using Archipelago.MultiClient.Net.Enums;
 using Archipelago.MultiClient.Net.Helpers;
+using BepInEx;
 using BepInEx.Configuration;
 using SpinCore.UI;
+using SpinCore.Utility;
+using UnityEngine;
 
 namespace SpinArchipelago
 {
@@ -90,7 +94,7 @@ namespace SpinArchipelago
         public static void ParseSongList()
         {
             var dict = new Dictionary<string, int>();
-            var songListRawStream = Assembly.GetExecutingAssembly().GetManifestResourceStream("SpinArchipelago.SongList.txt");
+            var songListRawStream = Assembly.GetExecutingAssembly().GetManifestResourceStream("SpinArchipelago.Resources.SongList.txt");
             if (songListRawStream == null)
                 throw new InvalidDataException("No song list");
             string songListRaw;
@@ -243,6 +247,39 @@ namespace SpinArchipelago
 #endif
             };
             UIHelper.RegisterMenuInModSettingsRoot("SpinArchipelago_Name", page);
+
+            var archipelagoIconStream = Assembly.GetExecutingAssembly().GetManifestResourceStream("SpinArchipelago.Resources.archipelago_white.png");
+            var archipelagoIconTex = RuntimeAssetLoader.Texture2DFromStream(archipelagoIconStream);
+            var archipelagoSprite = Sprite.Create(archipelagoIconTex, new Rect(1, 1, 510, 510), Vector2.zero);
+            var archipelagoSidePanel = UIHelper.CreateSidePanel("SpinArchipelagoTab", "SpinArchipelago_Name", archipelagoSprite);
+            archipelagoSidePanel.OnSidePanelLoaded += panelParent =>
+            {
+                UIHelper.CreateLabel(
+                    panelParent,
+                    "UnderConstruction",
+                    "SpinArchipelago_UnderConstruction"
+                );
+                UIHelper.CreateButton(
+                    panelParent,
+                    "FocusBossSong",
+                    "SpinArchipelago_FocusBossSong",
+                    () =>
+                    {
+                        if (!CanPlayBossSong)
+                        {
+                            Util.Notify("Boss song not available");
+                            return;
+                        }
+
+                        string bossSongName = _songNameToIdTable.FirstOrDefault(kvp => kvp.Value == BossSong).Key;
+                        var item = XDSelectionListMenu.Instance.ActiveList.items.Find(i => i.Title == bossSongName);
+                        if (item != null)
+                            XDSelectionListMenu.Instance.ScrollToItem(item);
+                        else
+                            Util.Notify("Unable to find boss song. Make sure your filters are cleared.");
+                    }
+                );
+            };
         }
 
         public static void GrabConfigEntries(ConfigFile config)
@@ -312,16 +349,16 @@ namespace SpinArchipelago
                     break;
             }
             _session.Locations.CompleteLocationChecks(id);
-            NotificationSystemGUI.AddMessage($"Completed song {id}. Location has been checked.");
+            Util.Notify($"Completed song {id}. Location has been checked.");
             if (CanPlayBossSong && !UnlockedSongs.Contains(BossSong))
             {
                 UnlockedSongs.Add(BossSong);
-                NotificationSystemGUI.AddMessage("Boss Song unlocked. Clear it to finish your run!");
+                Util.Notify("Boss Song unlocked. Clear it to finish your run!");
             }
             if (id == BossSong)
             {
                 _session.SetGoalAchieved();
-                NotificationSystemGUI.AddMessage("Congratulations, you have achieved your goal!");
+                Util.Notify("Congratulations, you have achieved your goal!");
             }
         }
 
@@ -338,31 +375,31 @@ namespace SpinArchipelago
             _justTriggeredDeathLink = true;
             Track.FailSong();
             _justTriggeredDeathLink = false;
-            NotificationSystemGUI.AddMessage($"DEATH LINK: {deathLink.Source} died. Cause: {deathLink.Cause}");
+            Util.Notify($"DEATH LINK: {deathLink.Source} died. Cause: {deathLink.Cause}");
         }
 
         private static void ConnectToServer()
         {
             if (string.IsNullOrWhiteSpace(PlayerName))
             {
-                NotificationSystemGUI.AddMessage("Player Name is empty");
+                Util.Notify("Player Name is empty");
                 return;
             }
             var addressParts = ServerAddress?.Split(':') ?? Array.Empty<string>();
             if (addressParts.Length != 2)
             {
-                NotificationSystemGUI.AddMessage("Invalid address");
+                Util.Notify("Invalid address");
                 return;
             }
 
             string address = addressParts[0];
             if (!ushort.TryParse(addressParts[1], out ushort port))
             {
-                NotificationSystemGUI.AddMessage("Invalid port");
+                Util.Notify("Invalid port");
                 return;
             }
             _session = ArchipelagoSessionFactory.CreateSession(address, port);
-            NotificationSystemGUI.AddMessage("Connecting to Archipelago server");
+            Util.Notify("Connecting to Archipelago server");
             Login();
         }
 
@@ -399,7 +436,7 @@ namespace SpinArchipelago
             if (!result.Successful)
             {
                 var failure = (LoginFailure)result;
-                NotificationSystemGUI.AddMessage("Failed to connect to server: check console logs for details");
+                Util.Notify("Failed to connect to server: check console logs for details");
                 string failureMessage = $"Failed to connect to {ServerAddress} as {PlayerName}:";
                 foreach (string error in failure.Errors)
                 {
@@ -417,7 +454,7 @@ namespace SpinArchipelago
             _postConnecting = true;
             _session.Items.ItemReceived += ReceivedItemHandler;
             _session.SetClientState(ArchipelagoClientState.ClientConnected);
-            NotificationSystemGUI.AddMessage("Connected!");
+            Util.Notify("Connected!");
             Log.Info("Connected!");
             _session.SetClientState(ArchipelagoClientState.ClientReady);
             _postConnecting = false;
@@ -453,8 +490,8 @@ namespace SpinArchipelago
             var itemInfo = helper.DequeueItem();
             UnlockedSongs.Add((int)itemInfo.ItemId);
             Log.Info($"NEW ITEM: Obtained Item {itemInfo.ItemId} {itemInfo.ItemName} from {itemInfo.Player.Name} in {itemInfo.Player.Game}");
-            if (_postConnecting) return; 
-            // NotificationSystemGUI.AddMessage($"Song {itemInfo.ItemName} unlocked (courtesy of {itemInfo.Player.Name})");
+            if (_postConnecting) return;
+            Util.Notify($"Song {itemInfo.ItemName} unlocked (courtesy of {itemInfo.Player.Name})");
             if (XDSelectionListMenu.Instance?.isActiveAndEnabled ?? false)
             {
                 XDSelectionListMenu.Instance?.UpdateListDisplays();

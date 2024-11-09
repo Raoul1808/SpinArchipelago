@@ -37,7 +37,7 @@ namespace SpinArchipelago
             var harmony = new Harmony(Guid);
             harmony.PatchAll(typeof(ArchipelagoPatches));
 
-            var stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("SpinArchipelago.locale.json");
+            var stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("SpinArchipelago.Resources.locale.json");
             TranslationHelper.LoadTranslationsFromStream(stream);
 #if DEBUG
             TranslationHelper.AddTranslation("SpinArchipelago_DebugSection", "Debug");

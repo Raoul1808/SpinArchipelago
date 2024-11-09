@@ -22,5 +22,11 @@
   },
   "SpinArchipelago_DeathLink": {
     "en": "Death Link"
+  },
+  "SpinArchipelago_UnderConstruction": {
+    "en": "Under Construction, come back later"
+  },
+  "SpinArchipelago_FocusBossSong": {
+    "en": "Scroll to boss song"
   }
 }

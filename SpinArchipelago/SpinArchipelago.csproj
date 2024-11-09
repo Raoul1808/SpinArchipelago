@@ -32,10 +32,12 @@
     </ItemGroup>
 
     <ItemGroup>
+      <EmbeddedResource Include="Resources\locale.json" />
+      <EmbeddedResource Include="Resources\SongList.txt" />
       <None Remove="locale.json" />
-      <EmbeddedResource Include="locale.json" />
       <None Remove="SongList.txt" />
-      <EmbeddedResource Include="SongList.txt" />
+      <None Remove="Resources\archipelago_white.png" />
+      <EmbeddedResource Include="Resources\archipelago_white.png" />
     </ItemGroup>
 
     <ItemGroup>
