@@ -28,5 +28,8 @@
   },
   "SpinArchipelago_FocusBossSong": {
     "en": "Scroll to boss song"
+  },
+  "SpinArchipelago_GenerateSongList": {
+    "en": "Generate Song List from current selection list"
   }
 }

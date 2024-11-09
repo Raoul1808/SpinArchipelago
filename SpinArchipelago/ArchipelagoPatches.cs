@@ -20,7 +20,7 @@ namespace SpinArchipelago
 
             __result = __instance.IndexInList == ArchipelagoManager.BossSong
                 ? ArchipelagoManager.CanPlayBossSong
-                : ArchipelagoManager.IsSongUnlocked(__instance.Title);
+                : ArchipelagoManager.IsSongUnlocked(__instance.TrackInfoMetadata.title);
         }
 
         // private static float GetMaxAccuracy(this PlayState playState)

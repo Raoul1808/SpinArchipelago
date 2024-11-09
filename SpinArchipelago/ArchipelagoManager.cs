@@ -3,12 +3,13 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Text;
 using Archipelago.MultiClient.Net;
 using Archipelago.MultiClient.Net.BounceFeatures.DeathLink;
 using Archipelago.MultiClient.Net.Enums;
 using Archipelago.MultiClient.Net.Helpers;
-using BepInEx;
 using BepInEx.Configuration;
+using Newtonsoft.Json;
 using SpinCore.UI;
 using SpinCore.Utility;
 using UnityEngine;
@@ -277,6 +278,29 @@ namespace SpinArchipelago
                             XDSelectionListMenu.Instance.ScrollToItem(item);
                         else
                             Util.Notify("Unable to find boss song. Make sure your filters are cleared.");
+                    }
+                );
+                UIHelper.CreateButton(
+                    panelParent,
+                    "GenerateSongList",
+                    "SpinArchipelago_GenerateSongList",
+                    () =>
+                    {
+                        string path = Path.Combine(Directory.GetParent(Assembly.GetExecutingAssembly().Location).FullName, "GeneratedSongList.txt");
+                        // var songs = new List<ArchipelagoSongId>();
+                        var songs = new StringBuilder();
+                        var songSelectItems = XDSelectionListMenu.Instance.ActiveList.items;
+                        for (int i = 0; i < songSelectItems.Count; i++)
+                        {
+                            var songItem = songSelectItems[i];
+                            if (songItem is MetadataHandle handle)
+                                // songs.Add(new ArchipelagoSongId(i + 1, handle));
+                                songs.AppendLine($"{i + 1}|{handle.TrackInfoMetadata.title}");
+                        }
+
+                        // string serializedSongs = JsonConvert.SerializeObject(songs);
+                        File.WriteAllText(path, songs.ToString());
+                        Util.Notify("Generated song list from current song selection. Check your plugins directory");
                     }
                 );
             };
